@@ -1,88 +1,118 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
-<title>Cricket Database v1.1</title>
+    <title>Cricket Database v1.2</title>
 
-<style>
+    <style>
 
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background: #f5f5f5;
-}
+        body{
+            font-family:Arial,sans-serif;
+            margin:20px;
+            background:#f5f5f5;
+        }
 
-h1 {
-    color: #7b1831;
-}
+        .version{
+            background:#d62828;
+            color:white;
+            padding:4px 10px;
+            border-radius:5px;
+            font-size:14px;
+            vertical-align:middle;
+        }
 
-.card {
-    display: inline-block;
-    background: white;
-    margin: 5px;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px #ccc;
-    min-width: 150px;
-}
+        .card{
+            display:inline-block;
+            background:white;
+            padding:15px;
+            margin:5px;
+            border-radius:10px;
+            box-shadow:0 2px 5px #ccc;
+            width:180px;
+        }
 
-input {
-    padding: 10px;
-    width: 300px;
-    margin: 15px 0;
-}
+        input{
+            width:300px;
+            padding:10px;
+            margin:15px 0;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-}
+        table{
+            width:100%;
+            border-collapse:collapse;
+            background:white;
+        }
 
-th {
-    background: #7b1831;
-    color: white;
-    cursor: pointer;
-}
+        th{
+            background:#7b1831;
+            color:white;
+            cursor:pointer;
+        }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-}
+        th,td{
+            padding:10px;
+            border:1px solid #ddd;
+        }
 
-tr:hover {
-    background: #f0f8ff;
-}
+        tr:hover{
+            background:#f0f8ff;
+        }
 
-#popup {
-    display: none;
-    position: fixed;
-    top: 20%;
-    left: 35%;
-    width: 300px;
-    background: white;
-    border: 2px solid #444;
-    padding: 20px;
-    box-shadow: 0 0 15px #444;
-}
+        #recordCount{
+            font-weight:bold;
+            margin-bottom:10px;
+        }
 
-#recordCount {
-    margin-bottom: 10px;
-    font-weight: bold;
-}
+        #status{
+            margin-bottom:10px;
+            color:#006400;
+            font-weight:bold;
+        }
 
-</style>
+        #popup{
+            display:none;
+            position:fixed;
+            top:20%;
+            left:50%;
+            transform:translateX(-50%);
+            width:320px;
+            background:white;
+            border:2px solid #333;
+            padding:20px;
+            box-shadow:0 0 20px #333;
+        }
+
+        #footerVersion{
+            position:fixed;
+            bottom:10px;
+            right:10px;
+            background:#222;
+            color:white;
+            padding:8px 12px;
+            border-radius:5px;
+            font-family:monospace;
+        }
+
+    </style>
 
 </head>
+
 <body>
 
-<h1>Cricket Player Database v1.1</h1>
+<h1>
+    Cricket Player Database
+    <span class="version">v1.2</span>
+</h1>
+
+<div id="status">Loading...</div>
 
 <div id="stats"></div>
 
 <input
     type="text"
     id="search"
-    placeholder="Search players, teams, runs, wickets">
+    placeholder="Search name, team, runs, wickets">
 
 <div id="recordCount"></div>
 
@@ -90,20 +120,27 @@ tr:hover {
 
 <div id="popup"></div>
 
+<div id="footerVersion">
+    CricketDB v1.2
+</div>
+
 <script>
+
+const VERSION = "1.2";
 
 let players = [];
 let filteredPlayers = [];
-let sortDirection = 1;
+let sortAscending = true;
 
 fetch("players.json")
 .then(response => response.json())
 .then(data => {
 
-    console.log("Data Loaded:", data);
-
     players = data;
     filteredPlayers = [...players];
+
+    document.getElementById("status").innerHTML =
+        "✅ Loaded " + players.length + " players";
 
     buildStats();
     renderTable(filteredPlayers);
@@ -113,8 +150,8 @@ fetch("players.json")
 
     console.error(error);
 
-    document.body.innerHTML +=
-        "<h2 style='color:red'>Failed to load players.json</h2>";
+    document.getElementById("status").innerHTML =
+        "❌ Failed to load players.json";
 
 });
 
@@ -122,18 +159,17 @@ document
     .getElementById("search")
     .addEventListener("input", filterPlayers);
 
-function buildStats() {
+function buildStats(){
 
     const totalRuns =
-        players.reduce((a,b) => a + b.runs, 0);
+        players.reduce((sum,p) => sum + p.runs,0);
 
     const totalWickets =
-        players.reduce((a,b) => a + b.wickets, 0);
+        players.reduce((sum,p) => sum + p.wickets,0);
 
     const topScorer =
         players.reduce((a,b) =>
-            a.runs > b.runs ? a : b
-        );
+            a.runs > b.runs ? a : b);
 
     document.getElementById("stats").innerHTML = `
 
@@ -160,10 +196,10 @@ function buildStats() {
     `;
 }
 
-function renderTable(data) {
+function renderTable(data){
 
-    document.getElementById("recordCount")
-        .innerText = `${data.length} player(s) found`;
+    document.getElementById("recordCount").innerHTML =
+        data.length + " player(s) found";
 
     let html = `
         <tr>
@@ -180,4 +216,94 @@ function renderTable(data) {
         html += `
             <tr>
                 <td>${player.name}</td>
-          
+                <td>${player.team}</td>
+                <td>${player.runs}</td>
+                <td>${player.wickets}</td>
+                <td>
+                    <button onclick="showPlayer(${player.id})">
+                        View
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("playersTable").innerHTML =
+        html;
+}
+
+function filterPlayers(){
+
+    const search =
+        document.getElementById("search")
+        .value
+        .toLowerCase();
+
+    filteredPlayers = players.filter(player =>
+
+        player.name.toLowerCase().includes(search) ||
+        player.team.toLowerCase().includes(search) ||
+        player.runs.toString().includes(search) ||
+        player.wickets.toString().includes(search)
+
+    );
+
+    renderTable(filteredPlayers);
+}
+
+function sortBy(column){
+
+    sortAscending = !sortAscending;
+
+    filteredPlayers.sort((a,b)=>{
+
+        if(typeof a[column] === "string"){
+
+            return sortAscending
+                ? a[column].localeCompare(b[column])
+                : b[column].localeCompare(a[column]);
+        }
+
+        return sortAscending
+            ? a[column] - b[column]
+            : b[column] - a[column];
+
+    });
+
+    renderTable(filteredPlayers);
+}
+
+function showPlayer(id){
+
+    const p =
+        players.find(player => player.id === id);
+
+    document.getElementById("popup").innerHTML = `
+
+        <h2>${p.name}</h2>
+
+        <p><b>Team:</b> ${p.team}</p>
+
+        <p><b>Runs:</b> ${p.runs}</p>
+
+        <p><b>Wickets:</b> ${p.wickets}</p>
+
+        <button onclick="closePopup()">
+            Close
+        </button>
+    `;
+
+    document.getElementById("popup").style.display = "block";
+}
+
+function closePopup(){
+
+    document.getElementById("popup").style.display = "none";
+}
+
+console.log("Cricket DB Version " + VERSION);
+
+</script>
+
+</body>
+</html>
