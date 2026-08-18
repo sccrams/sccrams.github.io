@@ -134,4 +134,80 @@
   },
   {
     "id": 20,
-    "name
+    "name": "Harry Ward",
+    "team": "3rd XI",
+    "runs": 512,
+    "wickets": 9
+  },
+  {
+    "id": 21,
+    "name": "Adam Wood",
+    "team": "1st XI",
+    "runs": 390,
+    "wickets": 15
+  },
+  {
+    "id": 22,
+    "name": "Ryan Hill",
+    "team": "2nd XI",
+    "runs": 325,
+    "wickets": 19
+  },
+  {
+    "id": 23,
+    "name": "Sean Reed",
+    "team": "3rd XI",
+    "runs": 444,
+    "wickets": 10
+  },
+  {
+    "id": 24,
+    "name": "Callum Shaw",
+    "team": "1st XI",
+    "runs": 111,
+    "wickets": 29
+  },
+  {
+    "id": 25,
+    "name": "Josh Price",
+    "team": "2nd XI",
+    "runs": 289,
+    "wickets": 12
+  },
+  {
+    "id": 26,
+    "name": "Nathan Long",
+    "team": "3rd XI",
+    "runs": 700,
+    "wickets": 1
+  },
+  {
+    "id": 27,
+    "name": "Ethan Young",
+    "team": "1st XI",
+    "runs": 355,
+    "wickets": 16
+  },
+  {
+    "id": 28,
+    "name": "Carl Bailey",
+    "team": "2nd XI",
+    "runs": 610,
+    "wickets": 5
+  },
+  {
+    "id": 29,
+    "name": "Matt Evans",
+    "team": "3rd XI",
+    "runs": 499,
+    "wickets": 7
+  },
+  {
+    "id": 30,
+    "name": "Ryan Foster",
+    "team": "1st XI",
+    "runs": 575,
+    "wickets": 18
+  }
+]
+
