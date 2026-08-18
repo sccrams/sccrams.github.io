@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Cricket Database v1.4</title>
+
+<script src="https://cdn.jsdelivr.net
+
+<style>
+
+body{
+    font-family:Arial,sans-serif;
+    margin:20px;
+    background:#f5f5f5;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+.version{
+    background:#d62828;
+    color:white;
+    padding:4px 10px;
+    border-radius:5px;
+    font-size:14px;
+}
+
+#status{
+    margin:15px 0;
+    padding:10px;
+    border-radius:5px;
+    font-weight:bold;
+}
+
+.success{
+    background:#d4edda;
+    color:#155724;
+}
+
+.error{
+    background:#f8d7da;
+    color:#721c24;
+}
+
+.card{
+    display:inline-block;
+    background:white;
+    padding:15px;
+    margin:5px;
+    border-radius:10px;
+    box-shadow:0 2px 5px #ccc;
+    width:180px;
+}
+
+input{
+    padding:10px;
+    width:300px;
+    margin:10px 0;
+}
+
+select{
+    padding:10px;
+    margin-right:10px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    margin-top:10px;
+}
+
+th{
+    background:#7b1831;
+    color:white;
+    cursor:pointer;
+}
+
+th,td{
+    padding:10px;
+    border:1px solid #ddd;
+}
+
+tr:hover{
+    background:#f0f8ff;
+}
+
+#recordCount{
+    margin-top:10px;
+    font-weight:bold;
+}
+
+#popup{
+    display:none;
+    position:fixed;
+    top:20%;
+    left:50%;
+    transform:translateX(-50%);
+    width:320px;
+    background:white;
+    border:2px solid #333;
+    padding:20px;
+    box-shadow:0 0 20px #333;
+    z-index:1000;
+}
+
+.chartContainer{
+    background:white;
+    margin:20px 0;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 5px #ccc;
+}
+
+#footer{
+    position:fixed;
+    right:10px;
+    bottom:10px;
+    background:#222;
+    color:white;
+    padding:8px 12px;
+    border-radius:5px;
+    font-family:monospace;
+}
+
+button{
+    cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>
+    Cricket Player Database
+    <span class="version">v1.4</span>
+</h1>
+
+<div id="status">
+    Loading players.json...
+</div>
+
+<div id="stats"></div>
+
+<div>
+
+    <select id="teamFilter">
+        <option value="">All Teams</option>
+        <option value="1st XI">1st XI</option>
+        <option value="2nd XI">2nd XI</option>
+        <option value="3rd XI">3rd XI</option>
+    </select>
+
+    <input
+        type="text"
+        id="search"
+        placeholder="Search name, team, runs, wickets">
+
+</div>
+
+<div id="recordCount"></div>
+
+<div class="chartContainer">
+    <h2>Top 10 Run Scorers</h2>
+    <canvas id="runsChart"></canvas>
+</div>
+
+<div class="chartContainer">
+    <h2>Top 10 Wicket Takers</h2>
+    <canvas id="wicketsChart"></canvas>
+</div>
+
+<div class="chartContainer">
+    <h2>Players Per Team
