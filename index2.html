@@ -1,72 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Cricket Database v1.6</title>
+<title>Cricket Database v1.7</title>
 
-<script src="https:r.net/npm/chart.js
-
-<script>
-console.log("Chart Loaded:", typeof Chart);
-</script>
-    
 <style>
 
 body{
     font-family:Arial,sans-serif;
-    margin:20px;
     background:#f5f5f5;
+    margin:20px;
 }
 
 .version{
     background:#d62828;
     color:white;
-    padding:4px 10px;
+    padding:5px 10px;
     border-radius:5px;
 }
 
 #status{
     padding:10px;
-    margin:15px 0;
+    margin-bottom:15px;
     border-radius:5px;
-    font-weight:bold;
-}
-
-.success{
     background:#d4edda;
-    color:#155724;
-}
-
-.error{
-    background:#f8d7da;
-    color:#721c24;
 }
 
 .card{
     display:inline-block;
+    background:white;
+    padding:15px;
     width:180px;
     margin:5px;
-    padding:15px;
-    background:white;
-    border-radius:10px;
-    box-shadow:0 2px 5px #ccc;
+    border-radius:8px;
+    box-shadow:0 2px 4px #ccc;
 }
 
-input,select{
-    padding:10px;
+input,select,button{
+    padding:8px;
     margin:5px;
-}
-
-input{
-    width:300px;
-}
-
-button{
-    padding:8px 12px;
-    cursor:pointer;
 }
 
 table{
@@ -91,12 +67,31 @@ tr:hover{
     background:#f0f8ff;
 }
 
-.chartContainer{
+.chartBox{
     background:white;
     padding:15px;
     margin:20px 0;
-    border-radius:10px;
-    box-shadow:0 2px 5px #ccc;
+    border-radius:8px;
+    box-shadow:0 2px 4px #ccc;
+}
+
+.barRow{
+    margin:8px 0;
+}
+
+.barLabel{
+    display:inline-block;
+    width:180px;
+}
+
+.bar{
+    display:inline-block;
+    height:20px;
+    background:#7b1831;
+}
+
+.wicketBar{
+    background:#00509d;
 }
 
 #popup{
@@ -105,47 +100,25 @@ tr:hover{
     top:20%;
     left:50%;
     transform:translateX(-50%);
-    background:white;
     width:320px;
-    padding:20px;
+    background:white;
     border:2px solid #333;
+    padding:20px;
     box-shadow:0 0 20px #333;
 }
 
 #footer{
     position:fixed;
-    right:10px;
     bottom:10px;
+    right:10px;
     background:#222;
     color:white;
-    padding:8px 12px;
+    padding:8px;
     border-radius:5px;
     font-family:monospace;
 }
 
 </style>
-
-<script>
-
-window.onerror = function(message, source, line){
-
-    document.body.insertAdjacentHTML(
-        "afterbegin",
-        `
-        <div style="
-            background:#ffdddd;
-            border:2px solid red;
-            padding:10px;
-            margin:10px;">
-            <b>JavaScript Error</b><br>
-            ${message}<br>
-            Line: ${line}
-        </div>
-        `
-    );
-};
-
-</script>
 
 </head>
 
@@ -153,52 +126,48 @@ window.onerror = function(message, source, line){
 
 <h1>
     Cricket Player Database
-    <span class="version">v1.6</span>
+    <span class="version">v1.7</span>
 </h1>
 
 <p id="buildInfo"></p>
 
 <div id="status">
-    ⏳ Loading players.json...
+    Loading players.json...
 </div>
 
 <div id="stats"></div>
 
-<div>
+<select id="teamFilter">
+    <option value="">All Teams</option>
+    <option value="1st XI">1st XI</option>
+    <option value="2nd XI">2nd XI</option>
+    <option value="3rd XI">3rd XI</option>
+</select>
 
-    <select id="teamFilter">
-        <option value="">All Teams</option>
-        <option value="1st XI">1st XI</option>
-        <option value="2nd XI">2nd XI</option>
-        <option value="3rd XI">3rd XI</option>
-    </select>
+<input
+    type="text"
+    id="search"
+    placeholder="Search players">
 
-    <input
-        type="text"
-        id="search"
-        placeholder="Search players">
-
-    <button onclick="exportCsv()">
-        Export CSV
-    </button>
-
-</div>
+<button onclick="exportCsv()">
+    Export CSV
+</button>
 
 <div id="recordCount"></div>
 
-<div class="chartContainer">
+<div class="chartBox">
     <h2>Top 10 Run Scorers</h2>
-    <canvas id="runsChart"></canvas>
+    <div id="runsChart"></div>
 </div>
 
-<div class="chartContainer">
+<div class="chartBox">
     <h2>Top 10 Wicket Takers</h2>
-    <canvas id="wicketsChart"></canvas>
+    <div id="wicketsChart"></div>
 </div>
 
-<div class="chartContainer">
+<div class="chartBox">
     <h2>Players Per Team</h2>
-    <canvas id="teamChart"></canvas>
+    <div id="teamChart"></div>
 </div>
 
 <table id="playersTable"></table>
@@ -206,21 +175,20 @@ window.onerror = function(message, source, line){
 <div id="popup"></div>
 
 <div id="footer">
-    CricketDB v1.6
+    CricketDB v1.7
 </div>
 
 <script>
 
-const VERSION = "1.6";
-
-document.getElementById("buildInfo").innerHTML =
-    "Build " + VERSION +
-    " | " +
-    new Date().toLocaleString();
+const VERSION = "1.7";
 
 let players = [];
 let filteredPlayers = [];
 let sortAscending = true;
+
+document.getElementById("buildInfo").innerText =
+    "Build " + VERSION + " | " +
+    new Date().toLocaleString();
 
 document
     .getElementById("search")
@@ -235,10 +203,8 @@ fetch("players.json")
 .then(response => {
 
     if(!response.ok){
-
         throw new Error(
-            "players.json not found (HTTP " +
-            response.status + ")"
+            "players.json not found"
         );
     }
 
@@ -251,35 +217,23 @@ fetch("players.json")
     players = data;
     filteredPlayers = [...players];
 
-    document.getElementById("status")
-        .className = "success";
-
-    document.getElementById("status")
-        .innerHTML =
+    document.getElementById("status").innerHTML =
         "✅ Loaded " +
         players.length +
         " players";
 
     buildStats();
+    buildRunsChart();
+    buildWicketsChart();
+    buildTeamChart();
+
     renderTable(players);
-
-    if(typeof Chart !== "undefined"){
-
-        buildRunsChart();
-        buildWicketsChart();
-        buildTeamChart();
-
-    }
 
 })
 
 .catch(error => {
 
-    document.getElementById("status")
-        .className = "error";
-
-    document.getElementById("status")
-        .innerHTML =
+    document.getElementById("status").innerHTML =
         "❌ " + error.message;
 
 });
@@ -293,40 +247,37 @@ function buildStats(){
         players.reduce((a,b)=>a+b.wickets,0);
 
     const topScorer =
-        players.reduce(
-            (a,b)=>
-            a.runs > b.runs ? a : b
-        );
+        players.reduce((a,b)=>
+            a.runs>b.runs?a:b);
 
-    document.getElementById("stats").innerHTML = `
+    document.getElementById("stats").innerHTML =
 
-        <div class="card">
-            <h3>Players</h3>
-            ${players.length}
-        </div>
+    `
+    <div class="card">
+        <h3>Players</h3>
+        ${players.length}
+    </div>
 
-        <div class="card">
-            <h3>Total Runs</h3>
-            ${totalRuns}
-        </div>
+    <div class="card">
+        <h3>Total Runs</h3>
+        ${totalRuns}
+    </div>
 
-        <div class="card">
-            <h3>Total Wickets</h3>
-            ${totalWickets}
-        </div>
+    <div class="card">
+        <h3>Total Wickets</h3>
+        ${totalWickets}
+    </div>
 
-        <div class="card">
-            <h3>Top Scorer</h3>
-            ${topScorer.name}
-        </div>
-
+    <div class="card">
+        <h3>Top Scorer</h3>
+        ${topScorer.name}
+    </div>
     `;
 }
 
 function renderTable(data){
 
-    document.getElementById("recordCount")
-        .innerHTML =
+    document.getElementById("recordCount").innerHTML =
         data.length + " player(s) found";
 
     let html = `
@@ -354,8 +305,8 @@ function renderTable(data){
         </tr>`;
     });
 
-    document.getElementById("playersTable")
-        .innerHTML = html;
+    document.getElementById("playersTable").innerHTML =
+        html;
 }
 
 function filterPlayers(){
@@ -371,18 +322,18 @@ function filterPlayers(){
 
     filteredPlayers = players.filter(player => {
 
-        const matchSearch =
+        const searchMatch =
 
             player.name.toLowerCase().includes(search) ||
             player.team.toLowerCase().includes(search) ||
             player.runs.toString().includes(search) ||
             player.wickets.toString().includes(search);
 
-        const matchTeam =
+        const teamMatch =
             team === "" ||
             player.team === team;
 
-        return matchSearch && matchTeam;
+        return searchMatch && teamMatch;
 
     });
 
@@ -413,23 +364,20 @@ function sortBy(column){
 function showPlayer(id){
 
     const p =
-        players.find(
-            x => x.id === id
-        );
+        players.find(x=>x.id===id);
 
-    document.getElementById("popup")
-        .innerHTML = `
+    document.getElementById("popup").innerHTML =
 
-        <h2>${p.name}</h2>
+    `
+    <h2>${p.name}</h2>
 
-        <p><b>Team:</b> ${p.team}</p>
-        <p><b>Runs:</b> ${p.runs}</p>
-        <p><b>Wickets:</b> ${p.wickets}</p>
+    <p><b>Team:</b> ${p.team}</p>
+    <p><b>Runs:</b> ${p.runs}</p>
+    <p><b>Wickets:</b> ${p.wickets}</p>
 
-        <button onclick="closePopup()">
-            Close
-        </button>
-
+    <button onclick="closePopup()">
+        Close
+    </button>
     `;
 
     document.getElementById("popup")
@@ -444,81 +392,81 @@ function closePopup(){
 
 function buildRunsChart(){
 
-    const top10 =
+    const top =
         [...players]
         .sort((a,b)=>b.runs-a.runs)
         .slice(0,10);
 
-    new Chart(
-        document.getElementById("runsChart"),
-        {
-            type:"bar",
-            data:{
-                labels:
-                    top10.map(x=>x.name),
-                datasets:[{
-                    label:"Runs",
-                    backgroundColor:"#7b1831",
-                    data:
-                        top10.map(x=>x.runs)
-                }]
-            }
-        }
-    );
+    let html = "";
+
+    top.forEach(player=>{
+
+        html += `
+        <div class="barRow">
+            <span class="barLabel">
+                ${player.name}
+            </span>
+
+            <div
+                class="bar"
+                style="width:${player.runs/2}px">
+            </div>
+
+            ${player.runs}
+        </div>`;
+    });
+
+    document.getElementById("runsChart")
+        .innerHTML = html;
 }
 
 function buildWicketsChart(){
 
-    const top10 =
+    const top =
         [...players]
         .sort((a,b)=>b.wickets-a.wickets)
         .slice(0,10);
 
-    new Chart(
-        document.getElementById("wicketsChart"),
-        {
-            type:"bar",
-            data:{
-                labels:
-                    top10.map(x=>x.name),
-                datasets:[{
-                    label:"Wickets",
-                    backgroundColor:"#00509d",
-                    data:
-                        top10.map(x=>x.wickets)
-                }]
-            }
-        }
-    );
+    let html = "";
+
+    top.forEach(player=>{
+
+        html += `
+        <div class="barRow">
+            <span class="barLabel">
+                ${player.name}
+            </span>
+
+            <div
+                class="bar wicketBar"
+                style="width:${player.wickets*15}px">
+            </div>
+
+            ${player.wickets}
+        </div>`;
+    });
+
+    document.getElementById("wicketsChart")
+        .innerHTML = html;
 }
 
 function buildTeamChart(){
 
-    const counts = {
+    const first =
+        players.filter(x=>x.team==="1st XI").length;
 
-        "1st XI": players.filter(x=>x.team==="1st XI").length,
-        "2nd XI": players.filter(x=>x.team==="2nd XI").length,
-        "3rd XI": players.filter(x=>x.team==="3rd XI").length
+    const second =
+        players.filter(x=>x.team==="2nd XI").length;
 
-    };
+    const third =
+        players.filter(x=>x.team==="3rd XI").length;
 
-    new Chart(
-        document.getElementById("teamChart"),
-        {
-            type:"pie",
-            data:{
-                labels:Object.keys(counts),
-                datasets:[{
-                    data:Object.values(counts),
-                    backgroundColor:[
-                        "#7b1831",
-                        "#00509d",
-                        "#6c757d"
-                    ]
-                }]
-            }
-        }
-    );
+    document.getElementById("teamChart").innerHTML =
+    `
+    <p>1st XI: ${first}</p>
+    <p>2nd XI: ${second}</p>
+    <p>3rd XI: ${third}</p>
+    `;
 }
 
 function exportCsv(){
@@ -526,33 +474,27 @@ function exportCsv(){
     let csv =
         "Name,Team,Runs,Wickets\n";
 
-    filteredPlayers.forEach(player => {
+    filteredPlayers.forEach(player=>{
 
         csv +=
             `"${player.name}","${player.team}",${player.runs},${player.wickets}\n`;
-
     });
 
     const blob =
         new Blob([csv],
         {type:"text/csv"});
 
-    const url =
-        URL.createObjectURL(blob);
-
     const link =
         document.createElement("a");
 
-    link.href = url;
+    link.href =
+        URL.createObjectURL(blob);
+
     link.download =
         "cricket_players.csv";
 
     link.click();
-
-    URL.revokeObjectURL(url);
 }
-
-console.log("CricketDB v1.6");
 
 </script>
 
