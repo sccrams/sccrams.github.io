@@ -1,12 +1,242 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
+
+<title>Cricket Database</title>
+
+<style>
+
+body{
+    font-family:Arial;
+    margin:20px;
+    background:#f5f5f5;
+}
+
+.card{
+    display:inline-block;
+    background:white;
+    padding:15px;
+    margin:5px;
+    border-radius:10px;
+    box-shadow:0 2px 5px #ccc;
+    width:180px;
+}
+
+input{
+    width:300px;
+    padding:10px;
+    margin:15px 0;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th{
+    background:#7b1831;
+    color:white;
+    cursor:pointer;
+}
+
+th,td{
+    padding:10px;
+    border:1px solid #ddd;
+}
+
+tr:hover{
+    background:#f0f8ff;
+}
+
+#popup{
+    display:none;
+    position:fixed;
+    top:20%;
+    left:35%;
+    width:300px;
+    background:white;
+    border:2px solid #333;
+    padding:20px;
+    box-shadow:0 0 20px #333;
+}
+
+button{
+    cursor:pointer;
+}
+
+</style>
+
 </head>
+
 <body>
-    <h1>Welcome to my website</h1>
-    <p>This website is hosted for free using GitHub Pages.</p>
+
+<h1>Cricket Player Database</h1>
+
+<div id="stats"></div>
+
+<input
+type="text"
+id="search"
+placeholder="Search Players"
+onkeyup="filterPlayers()">
+
+<table id="playersTable"></table>
+
+<div id="popup"></div>
+
+<script>
+
+let players=[];
+let currentSort="runs";
+
+fetch("players.json")
+.then(r=>r.json())
+.then(data=>{
+
+    players=data;
+
+    buildStats();
+    renderTable(players);
+
+});
+
+function buildStats(){
+
+    let totalRuns=
+        players.reduce((a,b)=>a+b.runs,0);
+
+    let totalWickets=
+        players.reduce((a,b)=>a+b.wickets,0);
+
+    let topScorer=
+        players.reduce((a,b)=>
+        a.runs>b.runs?a:b);
+
+    document.getElementById("stats").innerHTML=`
+
+        <div class='card'>
+        <h3>Players</h3>
+        ${players.length}
+        </div>
+
+        <div class='card'>
+        <h3>Total Runs</h3>
+        ${totalRuns}
+        </div>
+
+        <div class='card'>
+        <h3>Total Wickets</h3>
+        ${totalWickets}
+        </div>
+
+        <div class='card'>
+        <h3>Top Scorer</h3>
+        ${topScorer.name}
+        </div>
+    `;
+}
+
+function renderTable(data){
+
+    let html=`
+
+    <tr>
+        <th onclick="sortBy('name')">Name</th>
+        <th onclick="sortBy('team')">Team</th>
+        <th onclick="sortBy('runs')">Runs</th>
+        <th onclick="sortBy('wickets')">Wickets</th>
+        <th>Profile</th>
+    </tr>
+    `;
+
+    data.forEach(player=>{
+
+        html+=`
+
+        <tr>
+            <td>${player.name}</td>
+            <td>${player.team}</td>
+            <td>${player.runs}</td>
+            <td>${player.wickets}</td>
+            <td>
+                <button
+                onclick="showPlayer(${player.id})">
+                View
+                </button>
+            </td>
+        </tr>
+        `;
+    });
+
+    document.getElementById("playersTable")
+        .innerHTML=html;
+}
+
+function filterPlayers(){
+
+    let search=
+        document.getElementById("search")
+        .value
+        .toLowerCase();
+
+    let filtered=
+        players.filter(p=>
+
+        p.name.toLowerCase().includes(search) ||
+        p.team.toLowerCase().includes(search)
+
+        );
+
+    renderTable(filtered);
+}
+
+function sortBy(column){
+
+    players.sort((a,b)=>{
+
+        if(typeof a[column]==="string")
+            return a[column].localeCompare(b[column]);
+
+        return b[column]-a[column];
+
+    });
+
+    renderTable(players);
+}
+
+function showPlayer(id){
+
+    let p=
+        players.find(x=>x.id===id);
+
+    document.getElementById("popup").innerHTML=`
+
+        <h2>${p.name}</h2>
+
+        <p><b>Team:</b> ${p.team}</p>
+
+        <p><b>Runs:</b> ${p.runs}</p>
+
+        <p><b>Wickets:</b> ${p.wickets}</p>
+
+        <button onclick="closePopup()">
+        Close
+        </button>
+
+    `;
+
+    document.getElementById("popup")
+        .style.display="block";
+}
+
+function closePopup(){
+
+    document.getElementById("popup")
+        .style.display="none";
+}
+
+</script>
+
 </body>
 </html>
