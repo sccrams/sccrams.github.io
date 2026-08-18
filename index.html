@@ -2,84 +2,89 @@
 <html>
 <head>
 
-<title>Cricket Database</title>
+<title>Cricket Database v1.1</title>
 
 <style>
 
-body{
-    font-family:Arial;
-    margin:20px;
-    background:#f5f5f5;
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f5f5f5;
 }
 
-.card{
-    display:inline-block;
-    background:white;
-    padding:15px;
-    margin:5px;
-    border-radius:10px;
-    box-shadow:0 2px 5px #ccc;
-    width:180px;
+h1 {
+    color: #7b1831;
 }
 
-input{
-    width:300px;
-    padding:10px;
-    margin:15px 0;
+.card {
+    display: inline-block;
+    background: white;
+    margin: 5px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px #ccc;
+    min-width: 150px;
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
+input {
+    padding: 10px;
+    width: 300px;
+    margin: 15px 0;
 }
 
-th{
-    background:#7b1831;
-    color:white;
-    cursor:pointer;
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
 }
 
-th,td{
-    padding:10px;
-    border:1px solid #ddd;
+th {
+    background: #7b1831;
+    color: white;
+    cursor: pointer;
 }
 
-tr:hover{
-    background:#f0f8ff;
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
 }
 
-#popup{
-    display:none;
-    position:fixed;
-    top:20%;
-    left:35%;
-    width:300px;
-    background:white;
-    border:2px solid #333;
-    padding:20px;
-    box-shadow:0 0 20px #333;
+tr:hover {
+    background: #f0f8ff;
 }
 
-button{
-    cursor:pointer;
+#popup {
+    display: none;
+    position: fixed;
+    top: 20%;
+    left: 35%;
+    width: 300px;
+    background: white;
+    border: 2px solid #444;
+    padding: 20px;
+    box-shadow: 0 0 15px #444;
+}
+
+#recordCount {
+    margin-bottom: 10px;
+    font-weight: bold;
 }
 
 </style>
 
 </head>
-
 <body>
 
-<h1>Cricket Player Database</h1>
+<h1>Cricket Player Database v1.1</h1>
 
 <div id="stats"></div>
 
 <input
-type="text"
-id="search"
-placeholder="Search Players"
-onkeyup="filterPlayers()">
+    type="text"
+    id="search"
+    placeholder="Search players, teams, runs, wickets">
+
+<div id="recordCount"></div>
 
 <table id="playersTable"></table>
 
@@ -87,156 +92,92 @@ onkeyup="filterPlayers()">
 
 <script>
 
-let players=[];
-let currentSort="runs";
+let players = [];
+let filteredPlayers = [];
+let sortDirection = 1;
 
 fetch("players.json")
-.then(r=>r.json())
-.then(data=>{
+.then(response => response.json())
+.then(data => {
 
-    players=data;
+    console.log("Data Loaded:", data);
+
+    players = data;
+    filteredPlayers = [...players];
 
     buildStats();
-    renderTable(players);
+    renderTable(filteredPlayers);
+
+})
+.catch(error => {
+
+    console.error(error);
+
+    document.body.innerHTML +=
+        "<h2 style='color:red'>Failed to load players.json</h2>";
 
 });
 
-function buildStats(){
+document
+    .getElementById("search")
+    .addEventListener("input", filterPlayers);
 
-    let totalRuns=
-        players.reduce((a,b)=>a+b.runs,0);
+function buildStats() {
 
-    let totalWickets=
-        players.reduce((a,b)=>a+b.wickets,0);
+    const totalRuns =
+        players.reduce((a,b) => a + b.runs, 0);
 
-    let topScorer=
-        players.reduce((a,b)=>
-        a.runs>b.runs?a:b);
+    const totalWickets =
+        players.reduce((a,b) => a + b.wickets, 0);
 
-    document.getElementById("stats").innerHTML=`
-
-        <div class='card'>
-        <h3>Players</h3>
-        ${players.length}
-        </div>
-
-        <div class='card'>
-        <h3>Total Runs</h3>
-        ${totalRuns}
-        </div>
-
-        <div class='card'>
-        <h3>Total Wickets</h3>
-        ${totalWickets}
-        </div>
-
-        <div class='card'>
-        <h3>Top Scorer</h3>
-        ${topScorer.name}
-        </div>
-    `;
-}
-
-function renderTable(data){
-
-    let html=`
-
-    <tr>
-        <th onclick="sortBy('name')">Name</th>
-        <th onclick="sortBy('team')">Team</th>
-        <th onclick="sortBy('runs')">Runs</th>
-        <th onclick="sortBy('wickets')">Wickets</th>
-        <th>Profile</th>
-    </tr>
-    `;
-
-    data.forEach(player=>{
-
-        html+=`
-
-        <tr>
-            <td>${player.name}</td>
-            <td>${player.team}</td>
-            <td>${player.runs}</td>
-            <td>${player.wickets}</td>
-            <td>
-                <button
-                onclick="showPlayer(${player.id})">
-                View
-                </button>
-            </td>
-        </tr>
-        `;
-    });
-
-    document.getElementById("playersTable")
-        .innerHTML=html;
-}
-
-function filterPlayers(){
-
-    let search=
-        document.getElementById("search")
-        .value
-        .toLowerCase();
-
-    let filtered=
-        players.filter(p=>
-
-        p.name.toLowerCase().includes(search) ||
-        p.team.toLowerCase().includes(search)
-
+    const topScorer =
+        players.reduce((a,b) =>
+            a.runs > b.runs ? a : b
         );
 
-    renderTable(filtered);
-}
+    document.getElementById("stats").innerHTML = `
 
-function sortBy(column){
+        <div class="card">
+            <h3>Players</h3>
+            ${players.length}
+        </div>
 
-    players.sort((a,b)=>{
+        <div class="card">
+            <h3>Total Runs</h3>
+            ${totalRuns}
+        </div>
 
-        if(typeof a[column]==="string")
-            return a[column].localeCompare(b[column]);
+        <div class="card">
+            <h3>Total Wickets</h3>
+            ${totalWickets}
+        </div>
 
-        return b[column]-a[column];
-
-    });
-
-    renderTable(players);
-}
-
-function showPlayer(id){
-
-    let p=
-        players.find(x=>x.id===id);
-
-    document.getElementById("popup").innerHTML=`
-
-        <h2>${p.name}</h2>
-
-        <p><b>Team:</b> ${p.team}</p>
-
-        <p><b>Runs:</b> ${p.runs}</p>
-
-        <p><b>Wickets:</b> ${p.wickets}</p>
-
-        <button onclick="closePopup()">
-        Close
-        </button>
+        <div class="card">
+            <h3>Top Scorer</h3>
+            ${topScorer.name}
+        </div>
 
     `;
-
-    document.getElementById("popup")
-        .style.display="block";
 }
 
-function closePopup(){
+function renderTable(data) {
 
-    document.getElementById("popup")
-        .style.display="none";
-}
+    document.getElementById("recordCount")
+        .innerText = `${data.length} player(s) found`;
 
-</script>
+    let html = `
+        <tr>
+            <th onclick="sortBy('name')">Name</th>
+            <th onclick="sortBy('team')">Team</th>
+            <th onclick="sortBy('runs')">Runs</th>
+            <th onclick="sortBy('wickets')">Wickets</th>
+            <th>Profile</th>
+        </tr>
+    `;
 
-</body>
-</html>
+    data.forEach(player => {
+
+        html += `
+            <tr>
+                <td>${player.name}</td>
+          
