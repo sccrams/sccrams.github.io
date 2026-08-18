@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <div id="results"></div>
+
+    <script>
+        fetch('players.json')
+            .then(response => response.json())
+            .then(data => {
+                let output = '';
+
+                data.forEach(person => {
+                    output += `
+                        <p>
+                            ${person.id} -
+                            ${person.name} -
+                            ${person.role}
+                        </p>`;
+                });
+
+                document.getElementById('results').innerHTML = output;
+            });
+    </script>
+</body>
+</html>
