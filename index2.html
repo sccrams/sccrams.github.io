@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Cricket Database v1.7</title>
+<title>Cricket Database v1.8</title>
 
 <style>
 
@@ -30,12 +30,18 @@ body{
     background:#d4edda;
 }
 
+#stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:15px;
+}
+
 .card{
-    display:inline-block;
+    flex:1;
+    min-width:160px;
     background:white;
     padding:15px;
-    width:180px;
-    margin:5px;
     border-radius:8px;
     box-shadow:0 2px 4px #ccc;
 }
@@ -43,28 +49,6 @@ body{
 input,select,button{
     padding:8px;
     margin:5px;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-    margin-top:10px;
-}
-
-th{
-    background:#7b1831;
-    color:white;
-    cursor:pointer;
-}
-
-th,td{
-    padding:10px;
-    border:1px solid #ddd;
-}
-
-tr:hover{
-    background:#f0f8ff;
 }
 
 .chartBox{
@@ -87,11 +71,59 @@ tr:hover{
 .bar{
     display:inline-block;
     height:20px;
-    background:#7b1831;
+    background:#8b1538;
 }
 
 .wicketBar{
-    background:#00509d;
+    background:#0059b3;
+}
+
+.pieContainer{
+    display:flex;
+    align-items:center;
+    gap:30px;
+    flex-wrap:wrap;
+}
+
+.pie{
+    width:220px;
+    height:220px;
+    border-radius:50%;
+}
+
+.tableContainer{
+    max-height:600px;
+    overflow-y:auto;
+    background:white;
+    border-radius:8px;
+    box-shadow:0 2px 4px #ccc;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#8b1538;
+    color:white;
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+th,td{
+    padding:5px 8px;
+    border:1px solid #ddd;
+    font-size:12px;
+}
+
+tr:nth-child(even){
+    background:#f8f8f8;
+}
+
+tr:hover{
+    background:#eef5ff;
 }
 
 #popup{
@@ -118,6 +150,11 @@ tr:hover{
     font-family:monospace;
 }
 
+.legendItem{
+    margin:8px 0;
+    font-size:14px;
+}
+
 </style>
 
 </head>
@@ -126,7 +163,7 @@ tr:hover{
 
 <h1>
     Cricket Player Database
-    <span class="version">v1.7</span>
+    <span class="version">v1.8</span>
 </h1>
 
 <p id="buildInfo"></p>
@@ -137,57 +174,79 @@ tr:hover{
 
 <div id="stats"></div>
 
-<select id="teamFilter">
-    <option value="">All Teams</option>
-    <option value="1st XI">1st XI</option>
-    <option value="2nd XI">2nd XI</option>
-    <option value="3rd XI">3rd XI</option>
-</select>
+<div>
 
-<input
-    type="text"
-    id="search"
-    placeholder="Search players">
+    <select id="teamFilter">
+        <option value="">All Teams</option>
+        <option value="1st XI">1st XI</option>
+        <option value="2nd XI">2nd XI</option>
+        <option value="3rd XI">3rd XI</option>
+    </select>
 
-<button onclick="exportCsv()">
-    Export CSV
-</button>
+    <input
+        type="text"
+        id="search"
+        placeholder="Search players">
+
+    <button onclick="exportCsv()">
+        Export CSV
+    </button>
+
+</div>
 
 <div id="recordCount"></div>
 
 <div class="chartBox">
+
     <h2>Top 10 Run Scorers</h2>
+
     <div id="runsChart"></div>
+
 </div>
 
 <div class="chartBox">
+
     <h2>Top 10 Wicket Takers</h2>
+
     <div id="wicketsChart"></div>
+
 </div>
 
 <div class="chartBox">
+
     <h2>Players Per Team</h2>
-    <div id="teamChart"></div>
+
+    <div class="pieContainer">
+
+        <div id="teamPie"></div>
+
+        <div id="teamLegend"></div>
+
+    </div>
+
 </div>
 
-<table id="playersTable"></table>
+<div class="tableContainer">
+    <table id="playersTable"></table>
+</div>
 
 <div id="popup"></div>
 
 <div id="footer">
-    CricketDB v1.7
+    CricketDB v1.8
 </div>
 
 <script>
 
-const VERSION = "1.7";
+const VERSION = "1.8";
 
 let players = [];
 let filteredPlayers = [];
 let sortAscending = true;
 
-document.getElementById("buildInfo").innerText =
-    "Build " + VERSION + " | " +
+document.getElementById("buildInfo").innerHTML =
+    "Build " + VERSION +
+    " | " +
     new Date().toLocaleString();
 
 document
@@ -203,9 +262,11 @@ fetch("players.json")
 .then(response => {
 
     if(!response.ok){
+
         throw new Error(
             "players.json not found"
         );
+
     }
 
     return response.json();
@@ -278,10 +339,11 @@ function buildStats(){
 function renderTable(data){
 
     document.getElementById("recordCount").innerHTML =
-        data.length + " player(s) found";
+        `Showing ${data.length} of ${players.length} players`;
 
     let html = `
     <tr>
+        <th>#</th>
         <th onclick="sortBy('name')">Name</th>
         <th onclick="sortBy('team')">Team</th>
         <th onclick="sortBy('runs')">Runs</th>
@@ -289,10 +351,11 @@ function renderTable(data){
         <th>View</th>
     </tr>`;
 
-    data.forEach(player => {
+    data.forEach((player,index)=>{
 
         html += `
         <tr>
+            <td>${index+1}</td>
             <td>${player.name}</td>
             <td>${player.team}</td>
             <td>${player.runs}</td>
@@ -305,8 +368,8 @@ function renderTable(data){
         </tr>`;
     });
 
-    document.getElementById("playersTable").innerHTML =
-        html;
+    document.getElementById("playersTable")
+        .innerHTML = html;
 }
 
 function filterPlayers(){
@@ -363,17 +426,19 @@ function sortBy(column){
 
 function showPlayer(id){
 
-    const p =
-        players.find(x=>x.id===id);
+    const player =
+        players.find(
+            p=>p.id===id
+        );
 
     document.getElementById("popup").innerHTML =
 
     `
-    <h2>${p.name}</h2>
+    <h2>${player.name}</h2>
 
-    <p><b>Team:</b> ${p.team}</p>
-    <p><b>Runs:</b> ${p.runs}</p>
-    <p><b>Wickets:</b> ${p.wickets}</p>
+    <p><b>Team:</b> ${player.team}</p>
+    <p><b>Runs:</b> ${player.runs}</p>
+    <p><b>Wickets:</b> ${player.wickets}</p>
 
     <button onclick="closePopup()">
         Close
@@ -403,6 +468,7 @@ function buildRunsChart(){
 
         html += `
         <div class="barRow">
+
             <span class="barLabel">
                 ${player.name}
             </span>
@@ -413,6 +479,7 @@ function buildRunsChart(){
             </div>
 
             ${player.runs}
+
         </div>`;
     });
 
@@ -433,6 +500,7 @@ function buildWicketsChart(){
 
         html += `
         <div class="barRow">
+
             <span class="barLabel">
                 ${player.name}
             </span>
@@ -443,6 +511,7 @@ function buildWicketsChart(){
             </div>
 
             ${player.wickets}
+
         </div>`;
     });
 
@@ -453,19 +522,68 @@ function buildWicketsChart(){
 function buildTeamChart(){
 
     const first =
-        players.filter(x=>x.team==="1st XI").length;
+        players.filter(
+            p=>p.team==="1st XI"
+        ).length;
 
     const second =
-        players.filter(x=>x.team==="2nd XI").length;
+        players.filter(
+            p=>p.team==="2nd XI"
+        ).length;
 
     const third =
-        players.filter(x=>x.team==="3rd XI").length;
+        players.filter(
+            p=>p.team==="3rd XI"
+        ).length;
 
-    document.getElementById("teamChart").innerHTML =
+    const total =
+        players.length;
+
+    const firstPct =
+        Math.round((first/total)*100);
+
+    const secondPct =
+        Math.round((second/total)*100);
+
+    const thirdPct =
+        100 -
+        firstPct -
+        secondPct;
+
+    document.getElementById("teamPie").innerHTML =
+
     `
-    <p>1st XI: ${first}</p>
-    <p>2nd XI: ${second}</p>
-    <p>3rd XI: ${third}</p>
+    <div
+        class="pie"
+        style="
+            background:
+            conic-gradient(
+                #8b1538 0% ${firstPct}%,
+                #0059b3 ${firstPct}% ${firstPct + secondPct}%,
+                #777 ${firstPct + secondPct}% 100%
+            );
+        ">
+    </div>
+    `;
+
+    document.getElementById("teamLegend").innerHTML =
+
+    `
+    <div class="legendItem">
+        🟥 1st XI: ${first}
+    </div>
+
+    <div class="legendItem">
+        🟦 2nd XI: ${second}
+    </div>
+
+    <div class="legendItem">
+        ⬜ 3rd XI: ${third}
+    </div>
+
+    <div class="legendItem">
+        Total Players: ${total}
+    </div>
     `;
 }
 
@@ -478,11 +596,15 @@ function exportCsv(){
 
         csv +=
             `"${player.name}","${player.team}",${player.runs},${player.wickets}\n`;
+
     });
 
     const blob =
-        new Blob([csv],
-        {type:"text/csv"});
+        new Blob(
+            [csv],
+            {
+                type:"text/csv"
+            });
 
     const link =
         document.createElement("a");
