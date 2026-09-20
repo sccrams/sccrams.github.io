@@ -3,84 +3,199 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Gallery</title>
+  <title>Shadwell CC Player Gallery</title>
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --maroon: #800020;
+      --maroon-dark: #5c0017;
+      --maroon-light: #98002b;
+      --border: rgba(255,255,255,0.85);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
 
     body {
-      margin: 0;
-      padding: 24px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #111;
-      color: #eee;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--maroon);
+      color: white;
+      padding: 28px;
+    }
+
+    header {
+      text-align: center;
+      margin: 0 auto 30px;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: 1.5rem;
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
 
     #status {
-      color: #aaa;
-      margin-bottom: 20px;
+      margin-top: 10px;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.95rem;
     }
 
     .gallery {
+      max-width: 1800px;
+      margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 24px;
     }
 
-    .gallery a {
-      display: block;
-      aspect-ratio: 1;
+    /*
+      Each tile has a neutral background, but the image itself uses
+      object-fit: contain so the COMPLETE original image is displayed
+      without cropping or distortion.
+    */
+    .tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+      padding: 8px;
       overflow: hidden;
-      border-radius: 8px;
-      background: #222;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      background: rgba(0,0,0,0.16);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+      cursor: pointer;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
     }
 
-    .gallery img {
+    .tile:hover {
+      transform: translateY(-3px);
+      background: rgba(0,0,0,0.24);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.28);
+    }
+
+    .tile img {
+      display: block;
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.2s ease;
+      max-height: 420px;
+      object-fit: contain;
     }
 
-    .gallery a:hover img {
-      transform: scale(1.04);
+    /* Full-size image viewer */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      background: rgba(0,0,0,0.9);
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 95vw;
+      max-height: 92vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .close {
+      position: fixed;
+      top: 15px;
+      right: 22px;
+      border: 0;
+      background: none;
+      color: white;
+      font-size: 42px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .lightbox-name {
+      position: fixed;
+      left: 20px;
+      bottom: 15px;
+      right: 20px;
+      text-align: center;
+      color: rgba(255,255,255,0.85);
+      font-size: 0.9rem;
     }
 
     .error {
-      padding: 16px;
-      border: 1px solid #633;
-      border-radius: 8px;
-      background: #2a1717;
-      color: #fbb;
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 18px;
+      border-radius: 6px;
+      background: var(--maroon-dark);
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 14px;
+      }
+
+      .tile {
+        min-height: 150px;
+      }
     }
   </style>
 </head>
+
 <body>
-  <h1>Image Gallery</h1>
-  <div id="status">Loading images…</div>
-  <div id="gallery" class="gallery"></div>
+
+  <header>
+    <h1>Shadwell CC Player Gallery</h1>
+    <div id="status">Loading images…</div>
+  </header>
+
+  <main id="gallery" class="gallery"></main>
+
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <button class="close" aria-label="Close">&times;</button>
+    <img id="lightboxImage" src="" alt="">
+    <div id="lightboxName" class="lightbox-name"></div>
+  </div>
 
   <script>
     /*
-     * GitHub Pages does not provide directory listings, so images/
-     * cannot be discovered by fetching "images/". Instead, this page
-     * asks the GitHub API for the contents of the images directory.
-     */
+      GitHub Pages does not provide directory listings.
+      This uses the GitHub API to find every image in /images/.
+
+      If your repository name ever changes, update this URL.
+    */
     const repoApi =
       "https://api.github.com/repos/sccrams/sccrams.github.io/contents/images";
 
     const imageExtensions =
       /\.(jpe?g|png|gif|webp|bmp|svg|avif|tiff?)$/i;
 
-    async function loadGallery() {
-      const status = document.getElementById("status");
-      const gallery = document.getElementById("gallery");
+    const gallery = document.getElementById("gallery");
+    const status = document.getElementById("status");
 
+    async function loadGallery() {
       try {
         const response = await fetch(repoApi, {
           headers: {
@@ -89,51 +204,103 @@
         });
 
         if (!response.ok) {
-          throw new Error(`GitHub API returned HTTP ${response.status}`);
+          throw new Error("GitHub returned HTTP " + response.status);
         }
 
         const files = await response.json();
 
         const images = files
-          .filter(file => file.type === "file" && imageExtensions.test(file.name))
-          .sort((a, b) => a.name.localeCompare(b.name, undefined, {
-            numeric: true,
-            sensitivity: "base"
-          }));
+          .filter(file =>
+            file.type === "file" &&
+            imageExtensions.test(file.name)
+          )
+          .sort((a, b) =>
+            a.name.localeCompare(b.name, undefined, {
+              numeric: true,
+              sensitivity: "base"
+            })
+          );
 
-        if (!images.length) {
-          status.textContent = "No image files found in the images directory.";
+        if (images.length === 0) {
+          status.textContent = "No images found.";
           return;
         }
 
-        for (const file of images) {
-          const link = document.createElement("a");
-          link.href = file.path;
-          link.target = "_blank";
-          link.rel = "noopener";
+        images.forEach(file => {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.title = "Click to view full size";
 
           const img = document.createElement("img");
           img.src = file.download_url;
           img.alt = file.name;
           img.loading = "lazy";
 
-          link.appendChild(img);
-          gallery.appendChild(link);
-        }
+          tile.appendChild(img);
+          gallery.appendChild(tile);
+
+          tile.addEventListener("click", () => {
+            openLightbox(file.download_url, file.name);
+          });
+        });
 
         status.textContent =
-          `${images.length} image${images.length === 1 ? "" : "s"}`;
+          images.length + " image" +
+          (images.length === 1 ? "" : "s");
+
       } catch (error) {
         console.error(error);
-        status.innerHTML =
-          '<div class="error">' +
-          'Unable to load the images directory from GitHub.<br>' +
-          '<small>' + error.message + '</small>' +
-          '</div>';
+
+        status.textContent = "";
+
+        const errorBox = document.createElement("div");
+        errorBox.className = "error";
+        errorBox.innerHTML =
+          "<strong>Unable to load the gallery.</strong><br>" +
+          "Check that the images are in the repository's " +
+          "<code>images</code> directory and that the repository is public.";
+
+        gallery.appendChild(errorBox);
       }
     }
 
+    function openLightbox(src, name) {
+      const lightbox = document.getElementById("lightbox");
+      const image = document.getElementById("lightboxImage");
+      const imageName = document.getElementById("lightboxName");
+
+      image.src = src;
+      image.alt = name;
+      imageName.textContent = name;
+
+      lightbox.classList.add("open");
+      lightbox.setAttribute("aria-hidden", "false");
+    }
+
+    function closeLightbox() {
+      const lightbox = document.getElementById("lightbox");
+
+      lightbox.classList.remove("open");
+      lightbox.setAttribute("aria-hidden", "true");
+      document.getElementById("lightboxImage").src = "";
+    }
+
+    document.querySelector(".close").addEventListener("click", closeLightbox);
+
+    document.getElementById("lightbox").addEventListener("click", event => {
+      if (event.target.id === "lightbox") {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeLightbox();
+      }
+    });
+
     loadGallery();
   </script>
+
 </body>
 </html>
