@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Gallery</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111;
+      color: #eee;
+    }
+    h1 { margin: 0 0 20px; font-size: 1.5rem; }
+    #status { color: #aaa; margin-bottom: 20px; }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .gallery a {
+      display: block;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #222;
+    }
+    .gallery img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.2s ease;
+    }
+    .gallery a:hover img { transform: scale(1.04); }
+    .error {
+      padding: 16px;
+      border: 1px solid #633;
+      border-radius: 8px;
+      background: #2a1717;
+      color: #fbb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Image Gallery</h1>
+  <div id="status">Loading images…</div>
+  <div id="gallery" class="gallery"></div>
+
+  <script>
+    const imageExtensions = /\.(jpe?g|png|gif|webp|bmp|svg|avif|tiff?)$/i;
+
+    async function loadGallery() {
+      const status = document.getElementById("status");
+      const gallery = document.getElementById("gallery");
+
+      try {
+        // This expects the web server to expose a directory listing for /images/.
+        const response = await fetch("images/");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        const files = [...doc.querySelectorAll("a[href]")]
+          .map(a => a.getAttribute("href"))
+          .filter(href => href && imageExtensions.test(href))
+          .filter((href, index, list) => list.indexOf(href) === index);
+
+        if (!files.length) {
+          status.textContent = "No image files found in the images directory.";
+          return;
+        }
+
+        files.forEach(href => {
+          const link = document.createElement("a");
+          link.href = "images/" + href;
+          link.target = "_blank";
+          link.rel = "noopener";
+
+          const img = document.createElement("img");
+          img.src = "images/" + href;
+          img.alt = decodeURIComponent(href.split("/").pop());
+          img.loading = "lazy";
+
+          link.appendChild(img);
+          gallery.appendChild(link);
+        });
+
+        status.textContent = `${files.length} image${files.length === 1 ? "" : "s"}`;
+      } catch (error) {
+        status.innerHTML =
+          "Could not read the <code>images/</code> directory. " +
+          "This page needs to be served by a web server that provides a directory listing.";
+        console.error(error);
+      }
+    }
+
+    loadGallery();
+  </script>
+</body>
+</html>
